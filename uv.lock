@@ -395,29 +395,27 @@ wheels = [
 
 [[package]]
 name = "ida-domain-mcp"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "ida-domain" },
-    { name = "openai-agents" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "build" },
+    { name = "openai-agents" },
     { name = "pytest" },
     { name = "twine" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "ida-domain", specifier = ">=0.3.5" },
-    { name = "openai-agents", specifier = ">=0.5.1" },
-]
+requires-dist = [{ name = "ida-domain", specifier = ">=0.3.5" }]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "build", specifier = ">=1.3.0" },
+    { name = "openai-agents", specifier = ">=0.5.1" },
     { name = "pytest", specifier = ">=9.0.1" },
     { name = "twine", specifier = ">=6.2.0" },
 ]
