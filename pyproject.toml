@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ida-domain-mcp"
-version = "0.1.1"
+version = "0.1.2"
 description = "MCP plugin for IDA Pro/IDA Free that uses ida-domain for database access"
 authors = [
     {name = "Mimi", email = "stevenjoezhang@gmail.com"},

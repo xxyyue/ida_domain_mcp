@@ -4,6 +4,17 @@ A headless Model Context Protocol (MCP) server for IDA Pro built on top of `ida-
 
 Unlike GUI-centric approaches, ida-domain-mcp spins up per-project worker processes on demand and loads binaries via an MCP tool call during the agent’s workflow. You don’t have to pre-load binaries at MCP server startup, and once configured, the whole flow can run fully automatically without human interaction.
 
+## Example
+
+```bash
+# Start the MCP server (SSE mode)
+uv run ida-domain-mcp --transport http://127.0.0.1:8744
+
+# In another shell, run the test agent
+uv run tests/agent.py
+```
+![demo](assets/demo.png)
+
 ## Why It’s Different
 - Headless by design: No dependency on the IDA graphical UI. Uses `idat`/`idat64` (IDA’s headless runners) underneath via `ida-domain`.
 - On-demand database loading: Call the `open_database` MCP tool at any time during the agent session to load a binary or IDB; no manual preloading required.
