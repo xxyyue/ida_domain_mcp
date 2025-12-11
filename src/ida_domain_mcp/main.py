@@ -12,6 +12,10 @@ from typing import Dict, Tuple, Any
 # project_name -> (Process, parent_conn)
 PROJECTS: Dict[str, Tuple[mp.Process, Connection]] = {}
 
+def ensure_hex(address: int | str) -> str:
+    if isinstance(address, int):
+        address = hex(address)
+    return address
 
 def _worker(conn: Connection):
     """Child process loop hosting an IDA Database via ida_tools."""
@@ -239,7 +243,7 @@ async def get_function_by_name(project_name: str, name: str) -> str:
 
 
 @mcp.tool()
-async def get_function_by_address(project_name: str, address: int) -> str:
+async def get_function_by_address(project_name: str, address: int | str) -> str:
     """
     Get a function by its start address, including metadata and, if available,
     a short decompiled snippet.
@@ -258,7 +262,7 @@ async def get_function_by_address(project_name: str, address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "get_function_by_address", hex(address))
+    result = _call_project(project_name, "get_function_by_address", ensure_hex(address))
     return json.dumps(result, ensure_ascii=False)
 
 
@@ -502,7 +506,7 @@ async def list_local_types(project_name: str) -> str:
 
 
 @mcp.tool()
-async def decompile_function(project_name: str, address: int) -> str:
+async def decompile_function(project_name: str, address: int | str) -> str:
     """
     Decompile the function at the given address into pseudocode (if available).
 
@@ -519,12 +523,12 @@ async def decompile_function(project_name: str, address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "decompile_function", hex(address))
+    result = _call_project(project_name, "decompile_function", ensure_hex(address))
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
-async def disassemble_function(project_name: str, start_address: int) -> str:
+async def disassemble_function(project_name: str, start_address: int | str) -> str:
     """
     Return the assembly for a function (compatible with older IDA API styles).
 
@@ -540,12 +544,12 @@ async def disassemble_function(project_name: str, start_address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "disassemble_function", hex(start_address))
+    result = _call_project(project_name, "disassemble_function", ensure_hex(start_address))
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
-async def get_xrefs_to(project_name: str, address: int) -> str:
+async def get_xrefs_to(project_name: str, address: int | str) -> str:
     """
     Get all cross references (xrefs to) the given address.
 
@@ -561,7 +565,7 @@ async def get_xrefs_to(project_name: str, address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "get_xrefs_to", hex(address))
+    result = _call_project(project_name, "get_xrefs_to", ensure_hex(address))
     return json.dumps(result, ensure_ascii=False)
 
 
@@ -592,7 +596,7 @@ async def get_xrefs_to_field(
 
 
 @mcp.tool()
-async def get_callees(project_name: str, function_address: int) -> str:
+async def get_callees(project_name: str, function_address: int | str) -> str:
     """
     Get all direct callees of a function (outgoing edges).
 
@@ -608,12 +612,12 @@ async def get_callees(project_name: str, function_address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "get_callees", hex(function_address))
+    result = _call_project(project_name, "get_callees", ensure_hex(function_address))
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
-async def get_callers(project_name: str, function_address: int) -> str:
+async def get_callers(project_name: str, function_address: int | str) -> str:
     """
     Get all direct callers of a function (incoming edges).
 
@@ -629,7 +633,7 @@ async def get_callers(project_name: str, function_address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "get_callers", hex(function_address))
+    result = _call_project(project_name, "get_callers", ensure_hex(function_address))
     return json.dumps(result, ensure_ascii=False)
 
 
@@ -654,7 +658,7 @@ async def get_entry_points(project_name: str) -> str:
 
 
 @mcp.tool()
-async def set_comment(project_name: str, address: int, comment: str) -> str:
+async def set_comment(project_name: str, address: int | str, comment: str) -> str:
     """
     Set a comment at the given address and sync it to disassembly/pseudocode when possible.
 
@@ -671,14 +675,14 @@ async def set_comment(project_name: str, address: int, comment: str) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "set_comment", hex(address), comment)
+    result = _call_project(project_name, "set_comment", ensure_hex(address), comment)
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
 async def rename_local_variable(
     project_name: str,
-    function_address: int,
+    function_address: int | str,
     old_name: str,
     new_name: str,
 ) -> str:
@@ -699,7 +703,7 @@ async def rename_local_variable(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "rename_local_variable", hex(function_address), old_name, new_name)
+    result = _call_project(project_name, "rename_local_variable", ensure_hex(function_address), old_name, new_name)
     return json.dumps(result, ensure_ascii=False)
 
 
@@ -758,7 +762,7 @@ async def set_global_variable_type(
 @mcp.tool()
 async def patch_address_assembles(
     project_name: str,
-    address: int,
+    address: int | str,
     instructions: str,
 ) -> str:
     """
@@ -778,7 +782,7 @@ async def patch_address_assembles(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "patch_address_assembles", hex(address), instructions)
+    result = _call_project(project_name, "patch_address_assembles", ensure_hex(address), instructions)
     return json.dumps(result, ensure_ascii=False)
 
 
@@ -809,7 +813,7 @@ async def get_global_variable_value_by_name(
 @mcp.tool()
 async def get_global_variable_value_at_address(
     project_name: str,
-    address: int,
+    address: int | str,
 ) -> str:
     """
     Read the static value of a global variable by its address (if determinable).
@@ -826,14 +830,14 @@ async def get_global_variable_value_at_address(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "get_global_variable_value_at_address", hex(address))
+    result = _call_project(project_name, "get_global_variable_value_at_address", ensure_hex(address))
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
 async def rename_function(
     project_name: str,
-    function_address: int,
+    function_address: int | str,
     new_name: str,
 ) -> str:
     """
@@ -852,14 +856,14 @@ async def rename_function(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "rename_function", hex(function_address), new_name)
+    result = _call_project(project_name, "rename_function", ensure_hex(function_address), new_name)
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
 async def set_function_prototype(
     project_name: str,
-    function_address: int,
+    function_address: int | str,
     prototype: str,
 ) -> str:
     """
@@ -878,7 +882,7 @@ async def set_function_prototype(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "set_function_prototype", hex(function_address), prototype)
+    result = _call_project(project_name, "set_function_prototype", ensure_hex(function_address), prototype)
     return json.dumps(result, ensure_ascii=False)
 
 
@@ -906,7 +910,7 @@ async def declare_c_type(project_name: str, c_declaration: str) -> str:
 @mcp.tool()
 async def set_local_variable_type(
     project_name: str,
-    function_address: int,
+    function_address: int | str,
     variable_name: str,
     new_type: str,
 ) -> str:
@@ -927,14 +931,14 @@ async def set_local_variable_type(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "set_local_variable_type", hex(function_address), variable_name, new_type)
+    result = _call_project(project_name, "set_local_variable_type", ensure_hex(function_address), variable_name, new_type)
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
 async def get_stack_frame_variables(
     project_name: str,
-    function_address: int,
+    function_address: int | str,
 ) -> str:
     """
     Retrieve the stack frame variables for a given function (names, offsets, types, etc.).
@@ -951,7 +955,7 @@ async def get_stack_frame_variables(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "get_stack_frame_variables", hex(function_address))
+    result = _call_project(project_name, "get_stack_frame_variables", ensure_hex(function_address))
     return json.dumps(result, ensure_ascii=False)
 
 
@@ -999,7 +1003,7 @@ async def analyze_struct_detailed(project_name: str, name: str) -> str:
 @mcp.tool()
 async def get_struct_at_address(
     project_name: str,
-    address: int,
+    address: int | str,
     struct_name: str,
 ) -> str:
     """
@@ -1018,7 +1022,7 @@ async def get_struct_at_address(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "get_struct_at_address", hex(address), struct_name)
+    result = _call_project(project_name, "get_struct_at_address", ensure_hex(address), struct_name)
     return json.dumps(result, ensure_ascii=False)
 
 
@@ -1067,7 +1071,7 @@ async def search_structures(project_name: str, filter: str) -> str:
 @mcp.tool()
 async def rename_stack_frame_variable(
     project_name: str,
-    function_address: int,
+    function_address: int | str,
     old_name: str,
     new_name: str,
 ) -> str:
@@ -1088,15 +1092,15 @@ async def rename_stack_frame_variable(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "rename_stack_frame_variable", hex(function_address), old_name, new_name)
+    result = _call_project(project_name, "rename_stack_frame_variable", ensure_hex(function_address), old_name, new_name)
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
 async def create_stack_frame_variable(
     project_name: str,
-    function_address: int,
-    offset: int,
+    function_address: int | str,
+    offset: int | str,
     variable_name: str,
     type_name: str,
 ) -> str:
@@ -1118,14 +1122,14 @@ async def create_stack_frame_variable(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "create_stack_frame_variable", hex(function_address), hex(offset), variable_name, type_name)
+    result = _call_project(project_name, "create_stack_frame_variable", ensure_hex(function_address), ensure_hex(offset), variable_name, type_name)
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
 async def set_stack_frame_variable_type(
     project_name: str,
-    function_address: int,
+    function_address: int | str,
     variable_name: str,
     type_name: str,
 ) -> str:
@@ -1146,14 +1150,14 @@ async def set_stack_frame_variable_type(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "set_stack_frame_variable_type", hex(function_address), variable_name, type_name)
+    result = _call_project(project_name, "set_stack_frame_variable_type", ensure_hex(function_address), variable_name, type_name)
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
 async def delete_stack_frame_variable(
     project_name: str,
-    function_address: int,
+    function_address: int | str,
     variable_name: str,
 ) -> str:
     """
@@ -1172,14 +1176,14 @@ async def delete_stack_frame_variable(
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "delete_stack_frame_variable", hex(function_address), variable_name)
+    result = _call_project(project_name, "delete_stack_frame_variable", ensure_hex(function_address), variable_name)
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
 async def read_memory_bytes(
     project_name: str,
-    memory_address: int,
+    memory_address: int | str,
     size: int,
 ) -> str:
     """
@@ -1199,12 +1203,12 @@ async def read_memory_bytes(
 
     Returns: JSON string (often includes hex/raw representations).
     """
-    result = _call_project(project_name, "read_memory_bytes", hex(memory_address), size)
+    result = _call_project(project_name, "read_memory_bytes", ensure_hex(memory_address), size)
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
-async def data_read_byte(project_name: str, address: int) -> str:
+async def data_read_byte(project_name: str, address: int | str) -> str:
     """
     Read the 1-byte value at the specified address.
 
@@ -1220,12 +1224,12 @@ async def data_read_byte(project_name: str, address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "data_read_byte", hex(address))
+    result = _call_project(project_name, "data_read_byte", ensure_hex(address))
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
-async def data_read_word(project_name: str, address: int) -> str:
+async def data_read_word(project_name: str, address: int | str) -> str:
     """
     Read the 2-byte value (WORD) at the specified address.
 
@@ -1241,12 +1245,12 @@ async def data_read_word(project_name: str, address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "data_read_word", hex(address))
+    result = _call_project(project_name, "data_read_word", ensure_hex(address))
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
-async def data_read_dword(project_name: str, address: int) -> str:
+async def data_read_dword(project_name: str, address: int | str) -> str:
     """
     Read the 4-byte value (DWORD) at the specified address.
 
@@ -1262,12 +1266,12 @@ async def data_read_dword(project_name: str, address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "data_read_dword", hex(address))
+    result = _call_project(project_name, "data_read_dword", ensure_hex(address))
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
-async def data_read_qword(project_name: str, address: int) -> str:
+async def data_read_qword(project_name: str, address: int | str) -> str:
     """
     Read the 8-byte value (QWORD) at the specified address.
 
@@ -1283,12 +1287,12 @@ async def data_read_qword(project_name: str, address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "data_read_qword", hex(address))
+    result = _call_project(project_name, "data_read_qword", ensure_hex(address))
     return json.dumps(result, ensure_ascii=False)
 
 
 @mcp.tool()
-async def data_read_string(project_name: str, address: int) -> str:
+async def data_read_string(project_name: str, address: int | str) -> str:
     """
     Read the string at the specified address (encoding/termination as recognized by the DB).
 
@@ -1304,7 +1308,7 @@ async def data_read_string(project_name: str, address: int) -> str:
 
     Returns: JSON string.
     """
-    result = _call_project(project_name, "data_read_string", hex(address))
+    result = _call_project(project_name, "data_read_string", ensure_hex(address))
     return json.dumps(result, ensure_ascii=False)
 
 
