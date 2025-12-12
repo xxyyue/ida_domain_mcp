@@ -2,26 +2,20 @@
 
 A headless Model Context Protocol (MCP) server for IDA Pro built on top of `ida-domain`. It lets AI agents (or any MCP client) open and analyze IDA databases on demand — without launching the IDA manully — and control common reverse engineering workflows programmatically.
 
-Unlike GUI-centric approaches, ida-domain-mcp spins up per-project worker processes on demand and loads binaries via an MCP tool call during the agent’s workflow. You don’t have to pre-load binaries at MCP server startup, and once configured, the whole flow can run fully automatically without human interaction.
+Unlike GUI-centric approaches, ida-domain-mcp spins up per-project worker processes on demand and loads binaries via an MCP tool call during the agent's workflow. You don't have to pre-load binaries at MCP server startup, and once configured, the whole flow can run fully automatically without human interaction.
 
 ## Example
 
-```bash
-# Start the MCP server (SSE mode)
-uv run ida-domain-mcp --transport http://127.0.0.1:8744
-
-# In another shell, run the test agent
-uv run tests/agent.py
-```
 ![demo](assets/demo.png)
 
-## Why It’s Different
-- Headless by design: No dependency on the IDA graphical UI. Uses `idat`/`idat64` (IDA’s headless runners) underneath via `ida-domain`.
+## Why it's different
+
+- Headless by design: No dependency on the IDA graphical UI. Uses `idat`/`idat64` (IDA's headless runners) underneath via `ida-domain`.
 - On-demand database loading: Call the `open_database` MCP tool at any time during the agent session to load a binary or IDB; no manual preloading required.
 - Multi-project isolation: Each `project_name` runs in its own worker process; multiple binaries can be analyzed concurrently without interfering with each other.
-- Agent-friendly: Returns JSON-serializable results (as strings) so LLM agents can easily parse and chain operations.
 
 ## Features (tools)
+
 High-level categories of tools exposed via MCP (see `src/ida_domain_mcp/main.py` and `ida_tools.py` for the full list):
 - Project/session management: `open_database`, `close_database`, `get_metadata`
 - Navigation and listings: `list_segments`, `list_functions`, `list_functions_filter`, `list_globals`, `list_globals_filter`, `list_imports`, `list_strings`, `list_strings_filter`, `get_entry_points`
@@ -36,79 +30,88 @@ Notes:
 - Address parameters are accepted as integers by MCP entry points and are converted internally; results commonly encode addresses as hex strings.
 
 ## Requirements
+
 - Python: 3.11+
-- IDA: IDA Pro 9.1.0 or later installed. Headless executables (`idat`/`idat64`) must be available on your system.
-  - Make sure `idat`/`idat64` is in your `PATH` (e.g., add your IDA install directory), or configure the executable path according to `ida-domain`’s documentation.
-    ```
-    export IDADIR="[IDA Installation Directory]"
-    ```
-  - Hex-Rays decompiler is optional but required for `decompile_function`.
-- OS: Linux, Windows, or macOS supported by your IDA installation. The included examples were exercised on Linux.
+- IDA: IDA Pro 9.1.0 or later installed.
+- uv is recommended for Python package and project management. See [uv documentation](https://docs.astral.sh/uv/) for installation instructions.
+
+## Environment Variables
+
+Configure the executable path according to `ida-domain`'s documentation.
+```sh
+export IDADIR="[IDA Installation Directory]"
+```
+Headless executables (`idat`/`idat64`) must be available in the specified IDA installation directory.
 
 ## Installation
-From source:
 
-```bash
-# With uv
-uv venv
-uv pip install -e .
+**Make sure to set up the environment variable as described above before running the MCP server.**
 
-# Or with pip/venv
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -e .
+### Run with `uvx`
+
+The simplest way to run the MCP server without installing anything is via `uvx`:
+
+```sh
+uvx ida-domain-mcp --transport http://127.0.0.1:8744
 ```
 
-From PyPI:
+### Install from PyPI
 
-```bash
+You can install the package as a dependency of your project from PyPI:
+
+```sh
 # With uv
+uv init
 uv add ida-domain-mcp
-
 # Or with pip
 pip install ida-domain-mcp
 ```
 
-This installs `ida-domain-mcp` along with its runtime dependencies:
-- `ida-domain` (database control via headless IDA)
+### Install from source
 
-Before running, verify IDA’s headless binary is accessible:
+Clone the repository and install the package:
 
-```bash
-which idat64 || which idat
+```sh
+# With uv
+uv venv
+uv pip install -e .
+# Or with pip/venv
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
 ```
 
-If not found, add the IDA folder to your `PATH` or use the configuration options provided by `ida-domain` to point to your IDA installation.
-
 ## Running the MCP server
+
 Two transport modes are supported by the server entrypoint `ida-domain-mcp`:
 
-1) stdio (default, for direct MCP client integration)
-```bash
+1. stdio (default, for direct MCP client integration)
+```sh
 uv run ida-domain-mcp --transport stdio
 ```
 
-2) HTTP SSE (useful with the MCP Inspector and remote clients)
-```bash
+2. HTTP SSE (useful with the MCP Inspector and remote clients)
+```sh
 uv run ida-domain-mcp --transport http://127.0.0.1:8744
-# Server prints: MCP Server available at http://127.0.0.1:8744/sse
 ```
 
 You can then connect with the MCP Inspector for quick exploration:
 
-```bash
+```sh
 npx @modelcontextprotocol/inspector
 # Point it to: http://127.0.0.1:8744/sse
 ```
 
 ## Testing
+
 A simple dual-database test is provided:
 
-```bash
+```sh
 # Start the server first (SSE mode)
 uv run ida-domain-mcp --transport http://127.0.0.1:8744
 
 # In another shell, run the test client
 uv run ida_domain_mcp/tests/test_ida_mcp.py http://127.0.0.1:8744/sse
+# Or, run the test agent
+uv run tests/agent.py
 ```
-
