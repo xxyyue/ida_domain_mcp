@@ -10,7 +10,7 @@ Unlike GUI-centric approaches, ida-domain-mcp spins up per-project worker proces
 
 ## Why it's different
 
-- Headless by design: No dependency on the IDA graphical UI. Uses `idat`/`idat64` (IDA's headless runners) underneath via `ida-domain`.
+- Headless by design: No dependency on the IDA graphical UI. Uses IDA's headless runners underneath via `ida-domain`.
 - On-demand database loading: Call the `open_database` MCP tool at any time during the agent session to load a binary or IDB; no manual preloading required.
 - Multi-project isolation: Each `project_name` runs in its own worker process; multiple binaries can be analyzed concurrently without interfering with each other.
 
@@ -67,42 +67,36 @@ uv add ida-domain-mcp
 pip install ida-domain-mcp
 ```
 
-### Install from source
-
-Clone the repository and install the package:
-
-```sh
-# With uv
-uv venv
-uv pip install -e .
-# Or with pip/venv
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
 ## Running the MCP server
 
 Two transport modes are supported by the server entrypoint `ida-domain-mcp`:
 
 1. stdio (default, for direct MCP client integration)
-```sh
-uv run ida-domain-mcp --transport stdio
-```
+  ```sh
+  uv run ida-domain-mcp --transport stdio
+  ```
 
 2. HTTP SSE (useful with the MCP Inspector and remote clients)
-```sh
-uv run ida-domain-mcp --transport http://127.0.0.1:8744
-```
+  ```sh
+  uv run ida-domain-mcp --transport http://127.0.0.1:8744
+  ```
 
-You can then connect with the MCP Inspector for quick exploration:
+  You can then connect with the MCP Inspector for quick exploration:
 
-```sh
-npx @modelcontextprotocol/inspector
-# Point it to: http://127.0.0.1:8744/sse
-```
+  ```sh
+  npx @modelcontextprotocol/inspector
+  # Point it to: http://127.0.0.1:8744/sse
+  ```
 
 ## Testing
+
+Clone the repository and install the dependencies:
+
+```sh
+git clone https://github.com/xxyyue/ida_domain_mcp
+cd ida_domain_mcp
+uv sync
+```
 
 A simple dual-database test is provided:
 
@@ -113,5 +107,6 @@ uv run ida-domain-mcp --transport http://127.0.0.1:8744
 # In another shell, run the test client
 uv run ida_domain_mcp/tests/test_ida_mcp.py http://127.0.0.1:8744/sse
 # Or, run the test agent
+echo "OPENAI_API_KEY=sk-..." > .env
 uv run tests/agent.py
 ```
