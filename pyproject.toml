@@ -14,7 +14,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
-    "dotenv>=0.9.9",
+    "fastmcp>=2.14.0",
     "ida-domain>=0.3.5",
 ]
 
@@ -28,6 +28,7 @@ dev = [
     "pytest>=9.0.1",
     "twine>=6.2.0",
     "openai-agents>=0.5.1",
+    "dotenv>=0.9.9",
 ]
 
 [tool.setuptools.packages.find]
