@@ -3,7 +3,8 @@ from urllib.parse import urlparse
 import json
 import traceback
 import multiprocessing as mp
-from mcp.server.fastmcp import FastMCP
+import fastmcp
+from fastmcp import FastMCP
 from multiprocessing.connection import Connection
 from typing import Dict, Tuple, Any
 
@@ -1378,7 +1379,7 @@ def main():
     parser = argparse.ArgumentParser(description="ida_domain MCP Server")
     parser.add_argument("--transport", type=str, default="stdio", help="MCP transport protocol to use (stdio or http://127.0.0.1:8744)")
     args = parser.parse_args()
-    
+
     try:
         if args.transport == "stdio":
             mcp.run(transport="stdio")
@@ -1386,14 +1387,11 @@ def main():
             url = urlparse(args.transport)
             if url.hostname is None or url.port is None:
                 raise Exception(f"Invalid transport URL: {args.transport}")
-            mcp.settings.host = url.hostname
-            mcp.settings.port = url.port
             # NOTE: npx @modelcontextprotocol/inspector for debugging
-            print(f"MCP Server availabile at http://{mcp.settings.host}:{mcp.settings.port}/sse")
-            mcp.settings.log_level = "INFO"
-            mcp.run(transport="sse")
+            fastmcp.settings.log_level = "INFO"
+            mcp.run(transport="sse", host=url.hostname, port=url.port)
     except KeyboardInterrupt:
         pass
-    
+
 if __name__ == "__main__":
     main()
