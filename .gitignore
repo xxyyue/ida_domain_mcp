@@ -2,3 +2,9 @@
 __pycache__/
 dist/
 .env
+backup/
+*.id0
+*.id1
+*.id2
+*.nam
+*.til
