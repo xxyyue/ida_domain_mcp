@@ -7,8 +7,10 @@ import fastmcp
 from fastmcp import FastMCP
 from multiprocessing.connection import Connection
 from typing import Dict, Tuple, Any
+import os
+import logging
 
-
+logger = logging.getLogger(__name__)
 
 # project_name -> (Process, parent_conn)
 PROJECTS: Dict[str, Tuple[mp.Process, Connection]] = {}
@@ -1379,6 +1381,9 @@ def main():
     parser = argparse.ArgumentParser(description="ida_domain MCP Server")
     parser.add_argument("--transport", type=str, default="stdio", help="MCP transport protocol to use (stdio or http://127.0.0.1:8744)")
     args = parser.parse_args()
+    IDADIR = os.getenv("IDADIR")
+    if IDADIR is None:
+        logger.warning("Warning: IDADIR environment variable is not set.")
 
     try:
         if args.transport == "stdio":

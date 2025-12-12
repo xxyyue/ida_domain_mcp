@@ -1,3 +1,4 @@
+# https://github.com/mrexodia/ida-pro-mcp/blob/1.4.0/src/ida_pro_mcp/mcp-plugin.py
 import sys
 
 if sys.version_info < (3, 11):
