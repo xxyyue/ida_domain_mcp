@@ -27,7 +27,7 @@ High-level categories of tools exposed via MCP (see `src/ida_domain_mcp/main.py`
 
 Notes:
 - `decompile_function` requires a valid Hex-Rays license; otherwise use `disassemble_function`.
-- Address parameters are accepted as integers by MCP entry points and are converted internally; results commonly encode addresses as hex strings.
+- Address parameters are accepted as integers or hex strings by MCP entry points and are converted internally; results commonly encode addresses as hex strings.
 
 ## Requirements
 
@@ -37,7 +37,7 @@ Notes:
 
 ## Environment Variables
 
-Configure the executable path according to `ida-domain`'s documentation.
+Configure the executable path according to [`ida-domain`'s documentation](https://ida-domain.docs.hex-rays.com/getting_started/#step-3-verify-installation).
 ```sh
 export IDADIR="[IDA Installation Directory]"
 ```
@@ -72,21 +72,21 @@ pip install ida-domain-mcp
 Two transport modes are supported by the server entrypoint `ida-domain-mcp`:
 
 1. stdio (default, for direct MCP client integration)
-  ```sh
-  uv run ida-domain-mcp --transport stdio
-  ```
+    ```sh
+    uv run ida-domain-mcp --transport stdio
+    ```
 
 2. HTTP SSE (useful with the MCP Inspector and remote clients)
-  ```sh
-  uv run ida-domain-mcp --transport http://127.0.0.1:8744
-  ```
+    ```sh
+    uv run ida-domain-mcp --transport http://127.0.0.1:8744
+    ```
 
-  You can then connect with the MCP Inspector for quick exploration:
+    You can then connect with the MCP Inspector for quick exploration:
 
-  ```sh
-  npx @modelcontextprotocol/inspector
-  # Point it to: http://127.0.0.1:8744/sse
-  ```
+    ```sh
+    npx @modelcontextprotocol/inspector
+    # Point it to: http://127.0.0.1:8744/sse
+    ```
 
 ## Testing
 
