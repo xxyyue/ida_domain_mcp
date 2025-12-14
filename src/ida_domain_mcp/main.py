@@ -1380,6 +1380,7 @@ async def close_database(project_name: str, save: bool | None = None) -> str:
 def main():
     parser = argparse.ArgumentParser(description="ida_domain MCP Server")
     parser.add_argument("--transport", type=str, default="stdio", help="MCP transport protocol to use (stdio or http://127.0.0.1:8744)")
+    parser.add_argument("--streamable-http", action='store_true', help="Use Streamable HTTP instead of SSE (default)")
     args = parser.parse_args()
     IDADIR = os.getenv("IDADIR")
     if IDADIR is None:
@@ -1394,7 +1395,10 @@ def main():
                 raise Exception(f"Invalid transport URL: {args.transport}")
             # NOTE: npx @modelcontextprotocol/inspector for debugging
             fastmcp.settings.log_level = "INFO"
-            mcp.run(transport="sse", host=url.hostname, port=url.port)
+            if args.streamable_http:
+                mcp.run(transport="http", host=url.hostname, port=url.port)
+            else:
+                mcp.run(transport="sse", host=url.hostname, port=url.port)
     except KeyboardInterrupt:
         pass
 
