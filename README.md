@@ -76,16 +76,19 @@ Two transport modes are supported by the server entrypoint `ida-domain-mcp`:
     uv run ida-domain-mcp --transport stdio
     ```
 
-2. HTTP SSE (useful with the MCP Inspector and remote clients)
+2. SSE or Streamable HTTP (useful with the MCP Inspector and remote clients)
     ```sh
+    # sse at http://127.0.0.1:8744/sse
     uv run ida-domain-mcp --transport http://127.0.0.1:8744
+    # streamable http at http://127.0.0.1:8744/mcp
+    uv run ida-domain-mcp --transport http://127.0.0.1:8744 --streamable-http
     ```
 
     You can then connect with the MCP Inspector for quick exploration:
 
     ```sh
     npx @modelcontextprotocol/inspector
-    # Point it to: http://127.0.0.1:8744/sse
+    # Point it to: http://127.0.0.1:8744/sse (SSE) or http://127.0.0.1:8744/mcp (Streamable HTTP)
     ```
 
 ## Testing
