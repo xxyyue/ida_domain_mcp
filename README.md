@@ -1,12 +1,14 @@
 # ida-domain-mcp
 
-A headless Model Context Protocol (MCP) server for IDA Pro built on top of `ida-domain`. It lets AI agents (or any MCP client) open and analyze IDA databases on demand — without launching the IDA manully — and control common reverse engineering workflows programmatically.
+A headless Model Context Protocol (MCP) server for IDA Pro built on top of `ida-domain` and `ida-pro-mcp`. It lets AI agents (or any MCP client) open and analyze IDA databases on demand — without launching the IDA manully — and control common reverse engineering workflows programmatically.
 
 Unlike GUI-centric approaches, ida-domain-mcp spins up per-project worker processes on demand and loads binaries via an MCP tool call during the agent's workflow. You don't have to pre-load binaries at MCP server startup, and once configured, the whole flow can run fully automatically without human interaction.
 
 ## Example
 
-![demo](assets/demo.png)
+<!-- ![demo](assets/demo.png) -->
+![demo_1](assets/demo2_1.png)
+![demo_2](assets/demo2_2.png)
 
 ## Why it's different
 
@@ -16,22 +18,20 @@ Unlike GUI-centric approaches, ida-domain-mcp spins up per-project worker proces
 
 ## Features (tools)
 
-High-level categories of tools exposed via MCP (see `src/ida_domain_mcp/main.py` and `ida_tools.py` for the full list):
-- Project/session management: `open_database`, `close_database`, `get_metadata`
-- Navigation and listings: `list_segments`, `list_functions`, `list_functions_filter`, `list_globals`, `list_globals_filter`, `list_imports`, `list_strings`, `list_strings_filter`, `get_entry_points`
-- Function-oriented: `get_function_by_name`, `get_function_by_address`, `get_callers`, `get_callees`, `decompile_function` (requires Hex-Rays), `disassemble_function`
-- Cross-references: `get_xrefs_to`, `get_xrefs_to_field`
-- Types and structures: `list_local_types`, `declare_c_type`, `get_defined_structures`, `analyze_struct_detailed`, `get_struct_info_simple`, `search_structures`, `get_stack_frame_variables`, `set_function_prototype`, `set_local_variable_type`, `set_global_variable_type`
-- Renaming and comments: `rename_function`, `rename_local_variable`, `rename_stack_frame_variable`, `rename_global_variable`, `set_comment`
-- Data access and patching: `read_memory_bytes`, `data_read_{byte,word,dword,qword,string}`, `get_global_variable_value_{by_name,at_address}`, `patch_address_assembles`
+High-level categories of tools exposed via MCP:
+- Project/session management: `open_database`, `close_database`
+- IDB/Core: `idb_meta`, `lookup_funcs`, `cursor_addr`, `cursor_func`, `list_funcs`, `list_globals`, `imports`, `strings`, `segments`, `local_types`, `int_convert`
+- Analysis & Xrefs: `decompile`, `disasm`, `xrefs_to`, `xrefs_to_field`, `callees`, `callers`, `entrypoints`, `analyze_funcs`, `find_bytes`, `find_insns`, `basic_blocks`, `find_paths`, `search`, `find_insn_operands`, `export_funcs`, `callgraph`, `xref_matrix`, `analyze_strings`
+- Debugger: `dbg_start`, `dbg_exit`, `dbg_continue`, `dbg_run_to`, `dbg_step_into`, `dbg_step_over`, `dbg_list_bps`, `dbg_add_bp`, `dbg_delete_bp`, `dbg_enable_bp`, `dbg_regs`, `dbg_regs_thread`, `dbg_regs_cur`, `dbg_gpregs_thread`, `dbg_current_gpregs`, `dbg_regs_for_thread`, `dbg_current_regs`, `dbg_callstack`, `dbg_read_mem`, `dbg_write_mem`
+- Memory & Patch: `get_bytes`, `get_u8`, `get_u16`, `get_u32`, `get_u64`, `get_string`, `get_global_value`, `patch`
+- Types & Structs: `declare_type`, `apply_types`, `infer_types`, `structs`, `struct_info`, `read_struct`, `search_structs`, `stack_frame`, `declare_stack`, `delete_stack`
+- Python: `py_eval`
 
-Notes:
-- `decompile_function` requires a valid Hex-Rays license; otherwise use `disassemble_function`.
-- Address parameters are accepted as integers or hex strings by MCP entry points and are converted internally; results commonly encode addresses as hex strings.
+Most MCP tools here are thin wrappers around upstream ida_pro_mcp modules (core/analysis/debug/memory/modify/stack/types/python) and kept synchronized in functionality, parameters, and return formats. However, project/session management tools (`open_database`, `close_database`) are implemented locally for per-project process orchestration. See the source in [ida_domain_mcp/src/ida_domain_mcp/main.py](ida_domain_mcp/src/ida_domain_mcp/main.py) and [ida_domain_mcp/src/ida_domain_mcp/ida_tools.py](ida_domain_mcp/src/ida_domain_mcp/ida_tools.py) for the bindings, and [ida-pro-mcp/src/ida_pro_mcp/ida_mcp](ida-pro-mcp/src/ida_pro_mcp/ida_mcp) for upstream implementations.
 
 ## Requirements
 
-- Python: 3.11+
+- Python: 3.12+
 - IDA: IDA Pro 9.1.0 or later installed.
 - uv is recommended for Python package and project management. See [uv documentation](https://docs.astral.sh/uv/) for installation instructions.
 
@@ -108,7 +108,7 @@ A simple dual-database test is provided:
 uv run ida-domain-mcp --transport http://127.0.0.1:8744
 
 # In another shell, run the test client
-uv run ida_domain_mcp/tests/test_ida_mcp.py http://127.0.0.1:8744/sse
+uv run tests/test_ida_mcp.py http://127.0.0.1:8744/sse
 # Or, run the test agent
 echo "OPENAI_API_KEY=sk-..." > .env
 uv run tests/agent.py
