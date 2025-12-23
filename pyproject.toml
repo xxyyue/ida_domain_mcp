@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ida-domain-mcp"
-version = "0.1.2"
+version = "0.2.0b1"
 description = "MCP plugin for IDA Pro/IDA Free that uses ida-domain for database access"
 authors = [
     {name = "Mimi", email = "stevenjoezhang@gmail.com"},
@@ -12,10 +12,11 @@ authors = [
 ]
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "fastmcp>=2.14.0",
     "ida-domain>=0.3.5",
+    "ida-pro-mcp @ git+https://github.com/mrexodia/ida-pro-mcp.git@main"
 ]
 
 [project.urls]
