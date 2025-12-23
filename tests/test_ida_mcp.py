@@ -2,12 +2,12 @@
 
 Example startup:
 	uv run ida-domain-mcp --transport http://127.0.0.1:8744
-	uv run ida_domain_mcp/tests/test_ida_mcp.py http://127.0.0.1:8744/sse
+	uv run tests/test_ida_mcp.py http://127.0.0.1:8744/sse
 
 Test objectives:
 1. Connect to the ida-domain-mcp MCP Server (SSE transport)
 2. Use open_database to open two databases corresponding to different project_name values (using different binaries)
-3. Call tools (get_metadata / get_entry_points / list_functions, etc.) to verify they don't interfere with each other
+3. Call tools (idb_meta / entrypoints / list_funcs, etc.) to verify they don't interfere with each other
 4. Compare the metadata and entry point lists of the two databases for differences
 5. Close both databases
 
@@ -149,6 +149,7 @@ async def run_dual_database_test(sse_url: str):
 		MCPServerSse = getattr(mcp_mod, "MCPServerSse")
 	except Exception:
 		print("Unable to import agents.mcp. Please install the openai-agents package.")
+		# do not import agents.mcp when the VPN proxy is enabled
 		sys.exit(1)
 
 	print(f"Connecting to MCP server: {sse_url}")
@@ -174,8 +175,8 @@ async def run_dual_database_test(sse_url: str):
 
 	# 2. Open two databases (different project names, different binaries)
 	base_dir = os.path.dirname(__file__)
-	bin_a = os.path.join(base_dir, "binaries", "a.out")
-	bin_b = os.path.join(base_dir, "binaries", "crackme03.elf")
+	bin_a = os.path.join(base_dir, "challenge", "binaries", "device_main")
+	bin_b = os.path.join(base_dir, "challenge", "binaries", "secure_check.so")
 	if not os.path.exists(bin_a) or not os.path.exists(bin_b):
 		print(f"Missing test binaries: {bin_a} or {bin_b}")
 		await server.cleanup()
@@ -206,40 +207,47 @@ async def run_dual_database_test(sse_url: str):
 
 	# 3. Obtain metadata (analysis may not be finished, retry until some function/segment info present)
 	print("Fetching metadata for project A...")
-	meta_a = await _retry_tool(server, "get_metadata", {"project_name": proj_a}, lambda d: isinstance(d, dict), retries=5)
+	meta_a = await _retry_tool(server, "idb_meta", {"project_name": proj_a}, lambda d: isinstance(d, dict), retries=5)
 	print("metaA:", json.dumps(meta_a, ensure_ascii=False, indent=2)[:1500])
 
 	print("Fetching metadata for project B...")
-	meta_b = await _retry_tool(server, "get_metadata", {"project_name": proj_b}, lambda d: isinstance(d, dict), retries=5)
+	meta_b = await _retry_tool(server, "idb_meta", {"project_name": proj_b}, lambda d: isinstance(d, dict), retries=5)
 	print("metaB:", json.dumps(meta_b, ensure_ascii=False, indent=2)[:1500])
 
 	# 4. Get entry point lists and compare
 	print("Fetching entry points for project A...")
-	entries_a_raw = await _call_tool(server, "get_entry_points", {"project_name": proj_a})
+	entries_a_raw = await _call_tool(server, "entrypoints", {"project_name": proj_a})
 	entries_a = _decode_json_field(entries_a_raw)
 	print("entriesA:", entries_a)
 
 	print("Fetching entry points for project B...")
-	entries_b_raw = await _call_tool(server, "get_entry_points", {"project_name": proj_b})
+	entries_b_raw = await _call_tool(server, "entrypoints", {"project_name": proj_b})
 	entries_b = _decode_json_field(entries_b_raw)
 	print("entriesB:", entries_b)
 
 	# 5. Get function list (first 5) for comparison
 	def _func_list_pred(d: Any) -> bool:
+		# Accept legacy dict wrappers or new list[Page] format from list_funcs
 		if isinstance(d, dict):
-			# possible formats: {"functions": [...]} or others; any non-empty list is acceptable
 			for k in ("functions", "items", "result"):
 				v = d.get(k)
 				if isinstance(v, list) and len(v) > 0:
 					return True
+		if isinstance(d, list) and len(d) > 0:
+			# Each page is a dict with 'items'
+			for page in d:
+				if isinstance(page, dict):
+					items = page.get("items")
+					if isinstance(items, list) and len(items) > 0:
+						return True
 		return False
 
 	print("Listing project A functions (retry)...")
-	list_a = await _retry_tool(server, "list_functions", {"project_name": proj_a, "offset": 0, "count": 5}, _func_list_pred, retries=6)
+	list_a = await _retry_tool(server, "list_funcs", {"project_name": proj_a, "queries": {"offset": 0, "count": 5}}, _func_list_pred, retries=6)
 	print("funcsA:", json.dumps(list_a, ensure_ascii=False, indent=2)[:1200])
 
 	print("Listing project B functions (retry)...")
-	list_b = await _retry_tool(server, "list_functions", {"project_name": proj_b, "offset": 0, "count": 5}, _func_list_pred, retries=6)
+	list_b = await _retry_tool(server, "list_funcs", {"project_name": proj_b, "queries": {"offset": 0, "count": 5}}, _func_list_pred, retries=6)
 	print("funcsB:", json.dumps(list_b, ensure_ascii=False, indent=2)[:1200])
 
 	# 6. Basic difference checks
