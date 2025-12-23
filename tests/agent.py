@@ -13,7 +13,7 @@ dotenv.load_dotenv()
 
 API_KEY = os.getenv("OPENAI_API_KEY")
 BASE_URL = os.getenv("OPENAI_BASE_URL")
-MODEL_NAME = os.getenv("MODEL_NAME")
+OPENAI_DEFAULT_MODEL = os.getenv("OPENAI_DEFAULT_MODEL")
 
 ida_domain_tool = {
       "name": "ida-domain-mcp",
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         raise ValueError("API key not set")
     if not BASE_URL:
         raise ValueError("API base URL not set")
-    if not MODEL_NAME:
+    if not OPENAI_DEFAULT_MODEL:
         raise ValueError("Model name not set")
     
     # validate connection
