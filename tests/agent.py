@@ -1,7 +1,7 @@
 import asyncio
 import os
 import dotenv
-from agents import Agent, RunConfig, Runner, ModelSettings
+from agents import Agent, RunConfig, Runner, ModelSettings, Model, ModelProvider, OpenAIChatCompletionsModel
 from agents.mcp import MCPServerStdio, MCPServerSse
 from colorama import Fore, Style
 from openai import AsyncOpenAI
@@ -22,22 +22,26 @@ ida_domain_tool = {
     }
 
 query = """
-You task is to analyze a crackme in IDA Pro. You can use the MCP tools to retrieve information.
-
-Please:
-- Inspect the decompilation and add comments with your findings
-- Rename variables to more sensible names
-- Change the variable and argument types if necessary (especially pointer and array types)
-- Change function names to be more descriptive
-- If more details are necessary, disassemble the function and add comments with your findings
-- NEVER convert number bases yourself. Use the convert_number MCP tool if needed!
-- Do not attempt brute forcing, derive any solutions purely from the disassembly and simple python scripts
-- When you find a solution, prompt to me for feedback with the password you found
-- Summarize your findings and the steps you took to reach the solution
+You task is to analyze the binaries and extract the flag hidden within.
 
 Files you may need:
-tests/binaries/crackme03.elf
+tests/challenge/binaries/device_main
+tests/challenge/binaries/secure_check.so
+
+Please:
+- Analyze the provided binaries using IDA tools.
+- Summarize your findings and the steps you took to extract the flag.
 """
+
+class DefaultModelProvider(ModelProvider):
+    """Model provider using OpenAI compatible interface."""
+    
+    def get_model(self, model_name: str) -> Model:
+        """Get a model instance with the specified name."""
+        return OpenAIChatCompletionsModel(
+            model=model_name or OPENAI_DEFAULT_MODEL,
+            openai_client=AsyncOpenAI(base_url=BASE_URL, api_key=API_KEY)
+        )
 
 async def main():
 
@@ -75,8 +79,9 @@ async def main():
         result = await Runner.run(
             agent,
             input=query,
-            max_turns=30,
+            max_turns=50,
             run_config=RunConfig(
+                model_provider=DefaultModelProvider(),
                 trace_include_sensitive_data=True,
                 handoff_input_filter=None
             )
@@ -97,19 +102,12 @@ async def main():
 
 if __name__ == "__main__":
 
-    # validate env vars
     if not API_KEY:
         raise ValueError("API key not set")
     if not BASE_URL:
         raise ValueError("API base URL not set")
     if not OPENAI_DEFAULT_MODEL:
         raise ValueError("Model name not set")
-    
-    # validate connection
-    _ = AsyncOpenAI(
-        base_url=BASE_URL,
-        api_key=API_KEY
-    )
     
     # run main
     asyncio.run(main())
